@@ -1,4 +1,5 @@
 %global debug_package %{nil}
+%global _find_debuginfo_opts --no-ar-files
 Summary:	Pandoc 3.11 markup converter
 Name:		pandoc
 Version:	3.11
