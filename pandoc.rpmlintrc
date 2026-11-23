@@ -1,0 +1,13 @@
+# A compiler ships its RTS headers and static archives beside the driver.
+addFilter("E: devel-file-in-non-devel-package")
+addFilter("W: devel-file-in-non-devel-package")
+addFilter("W: no-manual-page-for-binary")
+addFilter("E: unused-rpmlintrc-filter")
+addFilter("E: zero-length")
+addFilter("E: static-library-without-debuginfo")
+addFilter("W: invalid-license")
+addFilter("W: invalid-url")
+addFilter("W: non-coherent-filename")
+addFilter("W: position-independent-executable-suggested")
+addFilter("E: incoherent-version-in-name")
+addFilter("W: incoherent-version-in-name")
