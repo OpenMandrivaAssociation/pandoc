@@ -1,1 +1,4 @@
 sources:
+  pandoc-3.11.tar.gz: 33734390ca01b6f8aec08789882875365ab9d054
+  pandoc-cli-3.11.tar.gz: 150124c95e2c41be86134ef82a51ea844ec5ef1c
+  pandoc-3.11-hackage.tar.gz: 0630b4aa5c18bfd0e1bcf8977608c2dae5bb9113
