@@ -37,7 +37,7 @@ export ALL_PROXY=http://127.0.0.1:9
 unset LD_LIBRARY_PATH || true
 unset GHC_PACKAGE_PATH || true
 
-mkdir -p "$TMPDIR" "$WORK/logs" "$WORK/src" "$WORK/proof" "$PREFIX/bin" "$CABAL_DIR"
+mkdir -p "$TMPDIR" "$WORK/logs" "$WORK/src" "$WORK/proof" "$WORK/bin" "$PREFIX/bin" "$CABAL_DIR"
 phase() { printf 'PANDOC311PKG_PHASE %s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 failed=0
 fail() { failed=1; printf 'PANDOC311PKG_FAILED: %s\n' "$*"; exit 1; }
@@ -67,6 +67,21 @@ ver=$("$GHC" --numeric-version | tr -d '[:space:]')
 cver=$("$CABAL" --numeric-version | tr -d '[:space:]')
 [ "$cver" = "3.12.1.0" ] || fail "cabal is $cver"
 [ -f "$FREEZE_SRC" ] || fail "freeze file missing"
+# ghc98 --print-libdir is .../lib/ghc-9.8.4/lib. hsc2hs is the sibling
+# bin, and that program does not find its template on its own. Cabal
+# looks up the hsc2hs program by name; the package does not put it on PATH.
+libdir=$("$GHC" --print-libdir)
+hsc2hs=$(dirname "$libdir")/bin/hsc2hs
+[ -x "$hsc2hs" ] || fail "hsc2hs missing: $hsc2hs"
+[ -f "$libdir/template-hsc.h" ] || fail "hsc2hs template missing: $libdir/template-hsc.h"
+cat > "$WORK/bin/hsc2hs" << EOF
+#!/bin/sh
+exec $(printf '%q' "$hsc2hs") --template=$(printf '%q' "$libdir/template-hsc.h") --lflag=-fuse-ld=lld "\$@" -I$(printf '%q' "$libdir/include/")
+EOF
+chmod 755 "$WORK/bin/hsc2hs"
+export PATH="$WORK/bin:$PATH"
+hash -r
+command -v hsc2hs | grep -F -q "$WORK/bin/hsc2hs" || fail "PATH hsc2hs is $(command -v hsc2hs)"
 phase "tools ghc $ver cabal $cver"
 printf '%s\n' "$$" > "$WORK/build.pid"
 
@@ -140,6 +155,7 @@ fi
 phase "plan"
 cd "$WORK/src"
 if ! stdbuf -oL -eL "$CABAL" build --dry-run -j8 --with-compiler="$GHC" \
+	--with-hsc2hs="$WORK/bin/hsc2hs" \
 	--disable-tests --disable-benchmarks pandoc-cli:exe:pandoc \
 	> "$WORK/logs/cabal-dry-run.log" 2>&1
 then
@@ -154,12 +170,13 @@ fi
 
 phase "build"
 if ! stdbuf -oL -eL "$CABAL" build -j8 --with-compiler="$GHC" \
+	--with-hsc2hs="$WORK/bin/hsc2hs" \
 	--disable-tests --disable-benchmarks pandoc-cli:exe:pandoc \
 	> "$WORK/logs/cabal-build.log" 2>&1
 then
 	fail "cabal build: $(tail -c 1800 "$WORK/logs/cabal-build.log" | tr '\n' ' ')"
 fi
-bin=$("$CABAL" list-bin pandoc-cli:exe:pandoc | tr -d '[:space:]')
+bin=$("$CABAL" list-bin --with-compiler="$GHC" --with-hsc2hs="$WORK/bin/hsc2hs" pandoc-cli:exe:pandoc | tr -d '[:space:]')
 [ -x "$bin" ] || fail "list-bin produced '$bin'"
 /bin/cp -f "$bin" "$PREFIX/bin/pandoc"
 chmod +x "$PREFIX/bin/pandoc"
