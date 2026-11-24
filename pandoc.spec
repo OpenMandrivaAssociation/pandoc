@@ -20,6 +20,10 @@ Source5:	%{name}.rpmlintrc
 
 BuildRequires:	ghc98
 BuildRequires:	cabal-install
+# ghc98 links with -lgmp and -lnuma. The .so symlinks come from the
+# devel packages; the ghc98 runtime requires do not pull them in.
+BuildRequires:	pkgconfig(gmp)
+BuildRequires:	pkgconfig(numa)
 BuildRequires:	pkgconfig(zlib)
 BuildRequires:	gcc
 BuildRequires:	python
