@@ -50,6 +50,8 @@ CABAL=$(command -v cabal || true)
 GHC=$(command -v ghc98 || true)
 [ -n "$CABAL" ] && [ -x "$CABAL" ] || fail "cabal missing"
 [ -n "$GHC" ] && [ -x "$GHC" ] || fail "ghc98 missing"
+command -v g++ >/dev/null || fail "g++ missing"
+command -v ld.lld >/dev/null || fail "ld.lld missing"
 CABAL=$(readlink -f "$CABAL")
 GHC=$(readlink -f "$GHC")
 export PATH="$(dirname "$CABAL"):$(dirname "$GHC"):$PATH"
@@ -155,7 +157,7 @@ if ! stdbuf -oL -eL "$CABAL" build -j8 --with-compiler="$GHC" \
 	--disable-tests --disable-benchmarks pandoc-cli:exe:pandoc \
 	> "$WORK/logs/cabal-build.log" 2>&1
 then
-	fail "cabal build: $(tail -30 "$WORK/logs/cabal-build.log" | tr '\n' ' ' | cut -c1-900)"
+	fail "cabal build: $(tail -c 1800 "$WORK/logs/cabal-build.log" | tr '\n' ' ')"
 fi
 bin=$("$CABAL" list-bin pandoc-cli:exe:pandoc | tr -d '[:space:]')
 [ -x "$bin" ] || fail "list-bin produced '$bin'"

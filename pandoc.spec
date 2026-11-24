@@ -25,7 +25,11 @@ BuildRequires:	cabal-install
 BuildRequires:	pkgconfig(gmp)
 BuildRequires:	pkgconfig(numa)
 BuildRequires:	pkgconfig(zlib)
+# ghc98 links with ld.lld and -fuse-ld=lld, including hsc2hs probes.
+# digest-0.0.2.1 also compiles its crc32c sources with g++.
 BuildRequires:	gcc
+BuildRequires:	gcc-c++
+BuildRequires:	lld
 BuildRequires:	python
 BuildRequires:	file
 BuildRequires:	tar
